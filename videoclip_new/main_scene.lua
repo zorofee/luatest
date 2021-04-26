@@ -4,31 +4,58 @@ local BundleSystem = require "venuscore.bundle.bundlesystem"
 local apolloengine = require "apollocore"
 local mathfunction = require "mathfunction"
 local VideoScene = require "videoclip_new.video_scene"
+local QuadNode = require "videoclip_new.quadnode"
 local MainScene = VideoScene:extend()
 
+--[[
+一、场景结构：
+1.cutterScene
+    --MainQuad(VideoMainScene) <|-----|
+                                      |
+                                     fbo
+2.mainScene                           |
+    --MainCamera  (GlobalFilter) -----|
+    --BgQuad      (ClearColor or Image)
+    --TransitionQuad (Fbo From Transition Scene) <|-----|
+    --VideoQuad01 (VideoScene01) <|----|                |
+    --VideoQuad02 (VideoScene02)       |                |
+                                       |                |
+                                      fbo               |
+3.videoScene01                         |               fbo
+    --MainCamera(VideoFilter)----------|                |
+    --QuadNode(DEVICE_CAPTURE)                          |
+                                                        |
+4.transitionScene                                       |
+    --MainCamera    ------------------------------------|
+    --QuadNode(TransitionMaterial)
+
+
+
+二、MainScene中的渲染层级
+    background < video quads < transition quad
+]]
 
 function MainScene:new()
     WARNING("[MainScene] new MainScene")
     self.renderoNodeList = {}
 
-
     --new main_video_scnee
     self.videoScene = apolloengine.SceneManager:CreateScene("MainScene")
+   
+   
     --主相机
-    self.mainCamera = self:_CreateCamera("Default",mathfunction.Color(0.28,0.28,0,1))   --red
-    self:_AddCameraLayerMask("Background");
-
-
-    --输出到main quad
-    self.mainFbo = self:_CreateRenderTarget()
-    self.mainCamera:AttachRenderTarget(self.mainFbo.rendertarget)
+    self.mainCamera = self:_CreateCamera("Default",mathfunction.Color(0.28,0.0,0.0,1))   --red
+    self.mainCamera:AddLayerMask("Background");
+    self.mainCamera:AddLayerMask("Transition");
 
 
     --背景
-    local background = self:_CreateQuad("Background2222222",0)
-    background:GetComponent(apolloengine.Node.CT_RENDER):SetRenderOrder(0)
-    background:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalScale(mathfunction.vector3(0.9,0.9,1))
-    background:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalPosition(mathfunction.vector3(0.0,0.0,0))
+    local background = QuadNode(self.videoScene)
+    background:SetLayer("Background")
+    background:SetRenderOrder(0)
+    background:SetLocalPosition(mathfunction.vector3(0.2,0.2,0))
+    background:SetLocalScale(mathfunction.vector3(0.9,0.2,1))
+
 
 
     --创建转场需要的拍摄相机和fbo,两段视频纹理需要两个相机拍摄
@@ -40,38 +67,49 @@ function MainScene:new()
     transition02CC:AddLayerMask("Background")
 
     --转场专用quad,转场材质是全屏显示,无法设置transform
-    self.transition = self:_CreateQuad("Transition",1)
-    self.transition:GetComponent(apolloengine.Node.CT_RENDER):SetRenderOrder(0)
-    self.transition:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalScale(mathfunction.vector3(0.6,0.6,1))
-    self.transition:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalPosition(mathfunction.vector3(0.0,0.0,0))
+    local transition = QuadNode(self.videoScene)
+    transition:SetLayer("Transition")
+    transition:SetRenderOrder(100)
+    transition:SetLocalPosition(mathfunction.vector3(-0.2,-0.2,0))
+    transition:SetLocalScale(mathfunction.vector3(0.9,0.2,1))
+    self.transition = transition
 
-    self:_CreateMainQuad()
+
+
+    
+    --mainscene渲染输出到cutterScene下的main quad
+    local mainFbo = self:_CreateRenderTarget()
+    self.mainCamera:AttachRenderTarget(mainFbo.rendertarget)
+
+    local cutterScene = apolloengine.SceneManager:GetOrCreateScene("video_cutter")
+    local mainQuad = QuadNode(cutterScene)
+    mainQuad:SetLocalScale(mathfunction.vector3(0.9,0.9,1.0))
+    mainQuad:SetMainTexture(mainFbo.color)
 
 end
+
 
 function MainScene:SetCanvasAspectRatio(ratioX,ratioY)
     
 end
 
+
 function MainScene:SetCanvasBGColor(color)
-    self.mainCamera:SetClearColor(color)
+    self.mainCamera:SetClearColor(mathfunction.Color(0.28,0.28,0.0,0.5))
 end
 
 
 
-function VideoScene:_CreateMainQuad()
-    local cutterScane = apolloengine.SceneManager:GetOrCreateScene("video_cutter")
-    local quad = cutterScane:CreateNode(apolloengine.Node.CT_NODE)
-    local trans = quad:CreateComponent(apolloengine.Node.CT_TRANSFORM)
-    local render = quad:CreateComponent(apolloengine.Node.CT_RENDER)
-    trans:SetLocalScale(mathfunction.vector3(0.4,0.4,1.0))
 
-    self:CreateRenderResource(render,"comm:documents/shaders/opaque/quad.material")
-    render:SetParameter("_MainTex",self.mainFbo.color)
-
-    return quad
+function VideoScene:CreateVideoQuad(layer,trackId,fbo)
+    local videoQuad = QuadNode(self.videoScene)
+    videoQuad:SetLayer(layer)
+    videoQuad:BindMainTexture("DEVICE_CAPTURE")
+    videoQuad:SetRenderOrder(trackId)
+    videoQuad:SetMainTexture(fbo)
+    videoQuad:SetActive(false)
+    return videoQuad
 end
-
 
 
 return MainScene

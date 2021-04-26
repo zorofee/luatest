@@ -117,6 +117,7 @@ end
 
 
 function VideoSceneModel:SetCanvasBGColor(color)
+  WARNING("******SetCanvasBGColor********333***")
     VideoSceneView:SetCanvasBGColor(color)
 end
 
@@ -169,7 +170,9 @@ function VideoSceneModel:AddMainSceneFilter(effectInfo)
     return effectId
 end
 
-
+function VideoSceneModel:SetVideoClipVisiable(clipId,bVisiable)
+    VideoSceneView:SetVideoClipVisiable(clipId,bVisiable)
+end
 
 
 

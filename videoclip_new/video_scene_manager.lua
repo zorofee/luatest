@@ -24,6 +24,7 @@ function VideoSceneManager:SetCanvasAspectRatio(ratioX,ratioY)
 end
 
 function VideoSceneManager:SetCanvasBGColor(color)
+  WARNING("******SetCanvasBGColor********222***")
     VideoSceneModel:SetCanvasBGColor(color)
 end
 
@@ -46,6 +47,10 @@ end
 
 function VideoSceneManager:AddMainSceneFilter(effectInfo)
     VideoSceneModel:AddMainSceneFilter(effectInfo)
+end
+
+function VideoSceneManager:SetVideoClipVisiable(clipId,bVisiable)
+    VideoSceneModel:SetVideoClipVisiable(clipId,bVisiable)
 end
 
 return VideoSceneManager

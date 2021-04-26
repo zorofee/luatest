@@ -76,7 +76,8 @@ end
 
 --4.设置背景颜色
 function VideoSceneTest:SetCanvasBGColor()
-    VideoSceneManager:SetCanvasBGColor(mathfunction.Color(0,0,1,1))
+  WARNING("******SetCanvasBGColor********111***")
+    VideoSceneManager:SetCanvasBGColor(mathfunction.Color(0.28,0.28,0.28,1))
 end
   
 
@@ -134,5 +135,12 @@ end
 function VideoSceneTest:RebuildScene()
     VideoSceneManager:Deserialization()
 end
-  
+
+local v = false
+function VideoSceneTest:SetVideoClipVisiable()
+  VideoSceneManager:SetVideoClipVisiable(self.clip1,v)
+  v = not v
+end
+
+
 return VideoSceneTest

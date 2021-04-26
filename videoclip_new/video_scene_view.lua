@@ -4,6 +4,7 @@ local venusjson = require "venusjson"
 local apollonode = require "apolloutility.apollonode"
 local VideoScene = require "videoclip_new.video_scene"
 local MainScene = require "videoclip_new.main_scene"
+local QuadNode = require "videoclip_new.quadnode"
 local VideoSceneView = {}
 
 function VideoSceneView:Initialize()
@@ -37,7 +38,8 @@ function VideoSceneView:SetCanvasAspectRatio(ratioX,ratioY)
 end
 
 function VideoSceneView:SetCanvasBGColor(color)
-    self.mainScene:SetCanvasBGColor(color)
+  WARNING("******SetCanvasBGColor********444***")
+  self.mainScene:SetCanvasBGColor(color)
 end
 
 
@@ -49,9 +51,7 @@ function VideoSceneView:AddVideoTrack(trackId,trackInfo)
     videoScene:BindRenderTarget(fbo)
 
     --在MainScene中创建显示视频画面的Quad,与VideoScene输出的fbo绑定
-    local videoQuad = self.mainScene:CreateRenderNode("Default")
-    videoQuad:GetComponent(apolloengine.Node.CT_RENDER):SetParameter("_MainTex",fbo.color)
-    videoQuad.Active = false
+    local videoQuad = self.mainScene:CreateVideoQuad("Default",trackId,fbo.color)
     self.trackSceneMap[trackId] = videoScene
     self.trackQuadMap[trackId] = videoQuad
     return trackId
@@ -63,7 +63,8 @@ function VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
     if videoScene ~= nil then
         WARNING("****************Add Video Clip**************" .. clipId)
         videoScene:AddMediaNode(clipInfo)
-        videoQuad.Active = true
+        videoQuad:SetActive(true)
+
         self.videoClipQuadMap[clipId] = videoQuad
         self.videoClipSceneMap[clipId] = videoScene
         return true
@@ -74,15 +75,15 @@ end
 
 
 function VideoSceneView:SetClipPosition(clipId,pos)
-    self.videoClipQuadMap[clipId]:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalPosition(pos)
+    self.videoClipQuadMap[clipId]:SetLocalPosition(pos)
 end
 
 function VideoSceneView:SetClipRotation(clipId,rot)
-    self.videoClipQuadMap[clipId]:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalRotation(rot)
+    self.videoClipQuadMap[clipId]:SetLocalRotation(rot)
 end
 
 function VideoSceneView:SetClipScale(clipId,scale)
-    self.videoClipQuadMap[clipId]:GetComponent(apolloengine.Node.CT_TRANSFORM):SetLocalScale(scale)
+    self.videoClipQuadMap[clipId]:SetLocalScale(scale)
 end
 
 
@@ -94,46 +95,12 @@ function VideoSceneView:AddMainSceneFilter(effectInfo)
     self.mainScene:AddCameraEffect(effectInfo)
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
---创建quad,承载其他场景渲染的纹理
-function VideoSceneView:_CreateQuad(layer,defaultmat)
-    local quad = self.mainScene:CreateNode(apolloengine.Node.CT_NODE)
-    local trans = quad:CreateComponent(apolloengine.Node.CT_TRANSFORM)
-    local render = quad:CreateComponent(apolloengine.Node.CT_RENDER)
-    quad:SetLayer(layer)
-
-    if defaultmat == nil then
-        render:PushMetadata(
-            --这里的quad shader有修改过
-            apolloengine.RenderObjectMaterialMetadata(apolloengine.PathMetadata("comm:documents/shaders/opaque/quad.material"))
-        )
-    elseif defaultmat ~= "" then
-        render:PushMetadata(
-            --这里的quad材质有修改过
-            apolloengine.RenderObjectMaterialMetadata(apolloengine.PathMetadata(defaultmat))
-        )
-    end
-
-    render:PushMetadata(
-        apolloengine.RenderObjectMeshFileMetadate("comm:documents/basicobjects/quad/data/plane001.mesh")
-    )
-    render:CreateResource();
-
-
-    return quad
+function VideoSceneView:SetVideoClipVisiable(clipId,bVisiable)
+    self.videoClipQuadMap[clipId]:SetActive(bVisiable)
 end
+
+
+
 
 --创建FBO和纹理
 function VideoSceneView:_CreateRenderTarget()
