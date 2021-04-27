@@ -14,6 +14,7 @@ function MainScene:new()
 
     self.mainCamera:AddLayerMask("Background");
     self.mainCamera:AddLayerMask("Transition");
+    self.mainCamera:SetClearColor(mathfunction.Color(0.0,0.5,0.0,1))
 
     --背景
     local background = QuadNode(self.videoScene)
