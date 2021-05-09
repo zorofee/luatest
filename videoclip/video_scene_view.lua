@@ -44,8 +44,13 @@ function VideoSceneView:Initialize()
     self.trackSceneMap = {}      --<trackId,videoScene>
     self.trackQuadMap = {}       --<trackId,videoQuad>
 
-    self.videoClipQuadMap = {}   --<clipId,videoScene>
-    self.videoClipSceneMap = {}  --<clipId,videoQuad>
+    self.videoClipQuadMap = {}   --<clipId,videoQuad>
+    self.videoClipSceneMap = {}  --<clipId,videoScene>
+
+    --帧数据
+    self.videoFrameItemList = {}  --vector<VideoFrameItem>
+
+    self.videoClipInfoMap = {}
 end
 
 
@@ -100,16 +105,20 @@ function VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
     local videoScene = self.trackSceneMap[trackId]
     local videoQuad = self.trackQuadMap[trackId]
     if videoScene ~= nil then
-        WARNING("[Add Video Clip]" .. clipId)
         videoScene:AddMediaNode(clipInfo)
         videoQuad:SetActive(true)
 
         self.videoClipQuadMap[clipId] = videoQuad
         self.videoClipSceneMap[clipId] = videoScene
+        WARNING("[Add Video Clip]" .. clipId .. " ,sceneNum: " .. #self.videoClipSceneMap)
+
+        self.videoClipInfoMap[clipId] = clipInfo
         return true
     else
         return false
     end
+
+
 end
 
 
@@ -140,6 +149,58 @@ end
 function VideoSceneView:SetVideoClipVisiable(clipId,bVisiable)
     self.videoClipQuadMap[clipId]:SetActive(bVisiable)
 end
+
+
+
+
+------------Seek Frame---------
+function VideoSceneView:Seek(frameIndex)
+    --对每个scene中的medianode进行seek
+    for trackId,trackScene in pairs(self.trackSceneMap) do
+        local clipId = trackScene:Seek(frameIndex)
+        if clipId ~= nil then
+            WARNING("--------SEEK FRAME---------frame:" .. frameIndex ..",track: " .. trackId .. " , clip:" .. clipId .. "   " .. 
+                tostring(self.videoClipInfoMap[clipId].pos) .. "   " .. tostring(self.videoClipInfoMap[clipId].scale))
+            
+            self.trackQuadMap[trackId]:SetLocalPosition(self.videoClipInfoMap[clipId].pos)
+            self.trackQuadMap[trackId]:SetLocalScale(self.videoClipInfoMap[clipId].scale)
+            self.trackQuadMap[trackId]:SetActive(true)
+        else
+            self.trackQuadMap[trackId]:SetActive(false)
+        end
+    end
+end
+
+-----------Add Transition----------
+function VideoSceneView:AddTransition(trackId,transitionInfo)
+
+    --隐藏原先的videoquad
+    self.videoClipQuadMap[transitionInfo.frontVideoId]:SetActive(false) 
+    --self.videoClipQuadMap[transitionInfo.backVideoId]:SetActive(false)
+
+    --新建两个fbo和两个videoquad用来显示需要转场的前后两段视频帧画面
+    local fbo1 = CreateRenderTarget()
+    local fbo2 = CreateRenderTarget()
+    self.trackSceneMap[trackId]:AddTransitionNode(transitionInfo,fbo1,fbo2)
+
+    local transitionQuad1 = self.mainScene:CreateVideoQuad(trackId + 1,fbo1.color)
+    transitionQuad1:SetLocalPosition(self.videoClipInfoMap[transitionInfo.frontVideoId].pos)    --pos 和 scale应该与clip保持一致
+    transitionQuad1:SetLocalScale(self.videoClipInfoMap[transitionInfo.frontVideoId].scale)    
+    transitionQuad1:SetActive(true)
+    transitionQuad1:SetLayer("transition1")
+
+    local transitionQuad2 = self.mainScene:CreateVideoQuad(trackId + 1,fbo2.color)
+    transitionQuad2:SetLocalPosition(self.videoClipInfoMap[transitionInfo.backVideoId].pos)
+    transitionQuad2:SetLocalScale(self.videoClipInfoMap[transitionInfo.backVideoId].scale)
+    transitionQuad2:SetActive(true)
+    transitionQuad2:SetLayer("transition2")
+
+end
+
+function VideoSceneView:SetTransitionProgress(progress)
+    self.mainScene:SetTransitionProgress(progress)
+end
+
 
 
 

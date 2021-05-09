@@ -73,7 +73,7 @@ end
 
 
 function VideoSceneModel:SetCanvasAspectRatio(ratioX,ratioY)
-
+    VideoSceneView:SetCanvasAspectRatio(ratioX,ratioY)
 end
 
 
@@ -151,6 +151,24 @@ function VideoSceneModel:_NewEffectId()
     EFFECT_ID = EFFECT_ID + 1 
     return EFFECT_ID
 end
+
+
+
+
+-------Seek Frame--------
+function VideoSceneModel:Seek(frameIndex)
+    VideoSceneView:Seek(frameIndex)
+end
+
+-------Add Transition------
+function VideoSceneModel:AddTransition(trackId,transitionInfo)
+    VideoSceneView:AddTransition(trackId,transitionInfo)
+end
+
+function VideoSceneModel:SetTransitionProgress(progress)
+    VideoSceneView:SetTransitionProgress(progress)
+end
+
 
 return VideoSceneModel
 

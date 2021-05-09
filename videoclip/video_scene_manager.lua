@@ -52,4 +52,21 @@ function VideoSceneManager:SetVideoClipVisiable(clipId,bVisiable)
     VideoSceneModel:SetVideoClipVisiable(clipId,bVisiable)
 end
 
+
+
+----------------Seek Frame-------------
+function VideoSceneManager:Seek(frameIndex)
+    VideoSceneModel:Seek(frameIndex)
+end
+
+
+-------Add Transition------
+function VideoSceneManager:AddTransition(trackId,transitionInfo)
+    VideoSceneModel:AddTransition(trackId,transitionInfo)
+end
+
+function VideoSceneManager:SetTransitionProgress(progress)
+    VideoSceneModel:SetTransitionProgress(progress)
+end
+
 return VideoSceneManager

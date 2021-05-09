@@ -4,14 +4,16 @@ local SceneNode = require "videoclip.scenenode"
 
 local QuadNode = SceneNode:extend()
 
-function QuadNode:new(scene)
-    QuadNode.super:new(scene)
+function QuadNode:new(scene,mat)
+    QuadNode.super.new(self,scene)
 
     self.trans = self.node:CreateComponent(apolloengine.Node.CT_TRANSFORM)
     self.render = self.node:CreateComponent(apolloengine.Node.CT_RENDER)
-
-    self:CreateResource("comm:documents/shaders/opaque/quad.material")
-
+    if mat~= nil then
+        self:CreateResource(mat)
+    else
+        self:CreateResource("comm:documents/shaders/opaque/quad_fixed.material")
+    end
 
     --for test
     --self:SetLocalScale(mathfunction.vector3(0.5,0.5,1.0))
@@ -54,6 +56,9 @@ function QuadNode:BindMainTexture(path)
     self.render:SetParameter("_MainTex",tex)
 end
 
+function QuadNode:SetParameter(name,value)
+    self.render:SetParameter(name,value)
+end
 
 function QuadNode:SetLayer(layer)
     self.node:SetLayer(layer)

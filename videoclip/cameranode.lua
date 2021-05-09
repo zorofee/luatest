@@ -6,7 +6,7 @@ local PostEffect = require "apolloutility.apollonode.posteffect"
 local CameraNode = SceneNode:extend()
 
 function CameraNode:new(scene)
-    CameraNode.super:new(scene)
+    CameraNode.super.new(self,scene)
     self.camera = self.node:CreateComponent(apolloengine.Node.CT_CAMERA)
     local near = 0.1
     local far = 1000
@@ -43,6 +43,10 @@ end
 function CameraNode:AddLayerMask(layer)
     self.camera:AddLayerMask(layer)
 end
+
+function CameraNode:SetCameraResolution(resolution)
+    self.camera:FixedResolution(resolution);
+  end
 
 function CameraNode:CreatePostEffect(effectInfo)
     self.post = PostEffect(self.camera:CreatePostEffect())

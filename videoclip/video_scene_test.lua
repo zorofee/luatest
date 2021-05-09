@@ -10,36 +10,65 @@ function VideoSceneTest:Initialize()
     VideoSceneManager:Initialize()
 end
 
+--添加一个轨道和一个视频
+function VideoSceneTest:AddSingleTrack()
+  local clipInfo1 = {
+    path = "test:short_video_effect/video_01.mp4",
+    pos = mathfunction.vector3(0.0,0.0,0.0),
+    rotation = mathfunction.vector3(0.0,0.0,0.0),
+    scale = mathfunction.vector3(1.0,1.0,1.0),
+    startTs = 1,
+    endTs = 10
+  }
+
+  local track1 = VideoSceneManager:AddVideoTrack(trackInfo)
+  self.clip1 = VideoSceneManager:AddVideoClip(track1,clipInfo1)
+end
+
+
 
 --2.在不同的轨道添加视频
 function VideoSceneTest:AddVideoClipsInDiffTrack()
     local clipInfo1 = {
       path = "test:short_video_effect/video_01.mp4",
-      pos = mathfunction.vector3(-0.2,-0.2,0.0),
+      pos = mathfunction.vector3(-0.2,0.2,1.0),
       rotation = mathfunction.vector3(0.0,0.0,0.0),
-      scale = mathfunction.vector3(0.6,0.5,1),
-      startTs = 1,
+      scale = mathfunction.vector3(1.0,1.0,1),
+      startTs = 0,
       endTs = 10
     }
     local clipInfo2 = {
+      path = "test:short_video_effect/video_03.mp4",
+      pos = mathfunction.vector3(0.2,-0.2,1.0),
+      rotation = mathfunction.vector3(0.0,0.0,0.0),
+      scale = mathfunction.vector3(1.0,1.0,1),
+      startTs = 11,
+      endTs = 25
+    }
+
+    local clipInfo3 = {
         path = "test:short_video_effect/video_02.mp4",
-        pos = mathfunction.vector3(0.2,-0.2,0.0),
+        pos = mathfunction.vector3(0.2,-0.2,1.0),
         rotation = mathfunction.vector3(0.0,0.0,0.0),
         scale = mathfunction.vector3(0.5,0.5,1),
-        startTs = 1,
-        endTs = 10
-      }
+        startTs = 5,
+        endTs = 20
+    }
+
+
+
     local trackInfo = {
       width = 720,
       height = 420
     }
   
 
-    local track1 = VideoSceneManager:AddVideoTrack(trackInfo)
-    self.clip1 = VideoSceneManager:AddVideoClip(track1,clipInfo1)
+    self.track1 = VideoSceneManager:AddVideoTrack(trackInfo)
+    self.clip1 = VideoSceneManager:AddVideoClip(self.track1,clipInfo1)
+    self.clip2 = VideoSceneManager:AddVideoClip(self.track1,clipInfo2)
     
-    local track2 = VideoSceneManager:AddVideoTrack(trackInfo)
-    self.clip2 = VideoSceneManager:AddVideoClip(track2,clipInfo2)
+    self.track2 = VideoSceneManager:AddVideoTrack(trackInfo)
+    self.clip3 = VideoSceneManager:AddVideoClip(self.track2,clipInfo3)
   
 end
 
@@ -97,6 +126,13 @@ function VideoSceneTest:SetClipTransform()
     }
     VideoSceneManager:SetClipTransform(self.clip2,transform2)
   
+    local transform3 = {
+      pos = mathfunction.vector3(0.1,-0.2,0.0),
+      rot = mathfunction.Quaternion(10.0,20.0,0.0,0.0),
+      scale = mathfunction.vector3(0.4,0.6,0.5),
+    }
+    VideoSceneManager:SetClipTransform(self.clip3,transform3)
+
 end
   
 
@@ -142,6 +178,31 @@ function VideoSceneTest:SetVideoClipVisiable()
   VideoSceneManager:SetVideoClipVisiable(self.clip1,v)
   v = not v
 end
+
+
+function VideoSceneTest:ModifyVideoClip()
+  local transform = {
+    pos = mathfunction.vector3(0.1,-0.2,0.0),
+    rot = mathfunction.Quaternion(10.0,20.0,0.0,0.0),
+    scale = mathfunction.vector3(0.6,0.6,0.6),
+  }
+  VideoSceneManager:SetClipTransform(self.clip1,transform)
+end
+
+
+
+-------Add Transition------
+function VideoSceneTest:AddTransition()
+  local tinfo = {
+    id = 10,
+    duration = 1000,
+    frontVideoId = 1,
+    backVideoId = 2,
+    path = ""
+  }
+  VideoSceneManager:AddTransition(self.track1,tinfo)
+end
+
 
 
 return VideoSceneTest
