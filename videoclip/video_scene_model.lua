@@ -16,6 +16,7 @@ function VideoSceneModel:Initialize()
     TRACK_ID = 0
     CLIP_ID = 0
     EFFECT_ID = 0
+    TRANSITION_ID = 0
 
     --数据层
     self.videoTrackInfoMap = {}             --map<trackId,trackInfo>
@@ -96,7 +97,12 @@ function VideoSceneModel:AddVideoClip(trackId,clipInfo)
     clipInfo.clipId = clipId
     clipInfo.trackId = trackId
     VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
+    WARNING("*********AddMediaNode*********** VideoInfo.duration : " .. clipInfo.duration)
     return clipId
+end
+
+function VideoSceneModel:DeleteVideoClip(clipId)
+    VideoSceneView:DeleteVideoClip(clipId)
 end
 
 
@@ -152,8 +158,16 @@ function VideoSceneModel:_NewEffectId()
     return EFFECT_ID
 end
 
+function VideoSceneModel:_NewTransitionId()
+    TRANSITION_ID = TRANSITION_ID + 1
+    return TRANSITION_ID
+end
 
 
+-------Time Line---------
+function VideoSceneModel:GetTotalTime()
+    VideoSceneView:GetTotalTime()
+end
 
 -------Seek Frame--------
 function VideoSceneModel:Seek(frameIndex)
@@ -161,12 +175,15 @@ function VideoSceneModel:Seek(frameIndex)
 end
 
 -------Add Transition------
-function VideoSceneModel:AddTransition(trackId,transitionInfo)
-    VideoSceneView:AddTransition(trackId,transitionInfo)
+function VideoSceneModel:AddTransition(transitionInfo)
+    local transitionId = self:_NewTransitionId()
+    transitionInfo.id = transitionId
+    VideoSceneView:AddTransition(transitionInfo)
+    return transitionId
 end
 
-function VideoSceneModel:SetTransitionProgress(progress)
-    VideoSceneView:SetTransitionProgress(progress)
+function VideoSceneModel:DeleteTransition(id)
+    VideoSceneView:DeleteTransition(id) 
 end
 
 

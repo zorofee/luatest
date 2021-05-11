@@ -28,22 +28,23 @@ end
 
 
 --2.在不同的轨道添加视频
-function VideoSceneTest:AddVideoClipsInDiffTrack()
+--一个轨道,两个clip位置改变
+function VideoSceneTest:AddVideoClipsInDiffTrack2()
     local clipInfo1 = {
       path = "test:short_video_effect/video_01.mp4",
       pos = mathfunction.vector3(-0.2,0.2,1.0),
       rotation = mathfunction.vector3(0.0,0.0,0.0),
-      scale = mathfunction.vector3(1.0,1.0,1),
+      scale = mathfunction.vector3(0.9,0.9,1),
       startTs = 0,
-      endTs = 10
+      endTs = 20
     }
     local clipInfo2 = {
       path = "test:short_video_effect/video_03.mp4",
       pos = mathfunction.vector3(0.2,-0.2,1.0),
       rotation = mathfunction.vector3(0.0,0.0,0.0),
-      scale = mathfunction.vector3(1.0,1.0,1),
-      startTs = 11,
-      endTs = 25
+      scale = mathfunction.vector3(0.9,0.9,1),
+      startTs = 21,
+      endTs = 40
     }
 
     local clipInfo3 = {
@@ -51,8 +52,8 @@ function VideoSceneTest:AddVideoClipsInDiffTrack()
         pos = mathfunction.vector3(0.2,-0.2,1.0),
         rotation = mathfunction.vector3(0.0,0.0,0.0),
         scale = mathfunction.vector3(0.5,0.5,1),
-        startTs = 5,
-        endTs = 20
+        startTs = 10,
+        endTs = 30
     }
 
 
@@ -71,6 +72,52 @@ function VideoSceneTest:AddVideoClipsInDiffTrack()
     self.clip3 = VideoSceneManager:AddVideoClip(self.track2,clipInfo3)
   
 end
+
+--一个轨道,两个clip位置不变
+function VideoSceneTest:AddVideoClipsInDiffTrack1()
+  local clipInfo1 = {
+    path = "test:short_video_effect/video_01.mp4",
+    pos = mathfunction.vector3(-0.2,0.2,1.0),
+    rotation = mathfunction.vector3(0.0,0.0,0.0),
+    scale = mathfunction.vector3(0.9,0.9,1),
+    startTs = -1,
+    endTs = 20
+  }
+  local clipInfo2 = {
+    path = "test:short_video_effect/video_03.mp4",
+    pos = mathfunction.vector3(-0.2,0.2,1.0),
+    rotation = mathfunction.vector3(0.0,0.0,0.0),
+    scale = mathfunction.vector3(0.9,0.9,1),
+    startTs = -1,
+    endTs = 40
+  }
+
+  local clipInfo3 = {
+      path = "test:short_video_effect/video_02.mp4",
+      pos = mathfunction.vector3(0.2,-0.2,1.0),
+      rotation = mathfunction.vector3(0.0,0.0,0.0),
+      scale = mathfunction.vector3(0.5,0.5,1),
+      startTs = 10,
+      endTs = 30
+  }
+
+
+
+  local trackInfo = {
+    width = 720,
+    height = 420
+  }
+
+
+  self.track1 = VideoSceneManager:AddVideoTrack(trackInfo)
+  self.clip1 = VideoSceneManager:AddVideoClip(self.track1,clipInfo1)
+  self.clip2 = VideoSceneManager:AddVideoClip(self.track1,clipInfo2)
+  
+  self.track2 = VideoSceneManager:AddVideoTrack(trackInfo)
+  self.clip3 = VideoSceneManager:AddVideoClip(self.track2,clipInfo3)
+
+end
+
 
 
 --3.在同一个轨道添加视频
@@ -193,14 +240,21 @@ end
 
 -------Add Transition------
 function VideoSceneTest:AddTransition()
-  local tinfo = {
-    id = 10,
-    duration = 1000,
+  local info = {
+    duration = 30,
     frontVideoId = 1,
     backVideoId = 2,
-    path = ""
+    path = "rotate"
   }
-  VideoSceneManager:AddTransition(self.track1,tinfo)
+  self.transition1 = VideoSceneManager:AddTransition(info)
+end
+
+function VideoSceneTest:DeleteTransition()
+  VideoSceneManager:DeleteTransition(self.transition1)
+end
+
+function VideoSceneTest:DeleteVideoClip()
+  VideoSceneManager:DeleteVideoClip(self.clip3)
 end
 
 

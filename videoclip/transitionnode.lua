@@ -4,8 +4,8 @@ local QuadNode = require "videoclip.quadnode"
 
 local TransitionNode = QuadNode:extend()
 
-function TransitionNode:new(scene)
-    TransitionNode.super.new(self,scene,"comm:documents/shaders/transition/rotate.material")
+function TransitionNode:new(scene,matPath)
+    TransitionNode.super.new(self,scene,matPath)
 end
 
 

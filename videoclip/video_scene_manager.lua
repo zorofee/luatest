@@ -35,6 +35,9 @@ function VideoSceneManager:AddVideoClip(trackId,clipInfo)
     return VideoSceneModel:AddVideoClip(trackId,clipInfo)
 end
 
+function VideoSceneManager:DeleteVideoClip(clipId)
+    return VideoSceneModel:DeleteVideoClip(clipId)
+end
 
 function VideoSceneManager:SetClipTransform(clipId,transform)
     VideoSceneModel:SetClipTransform(clipId,transform)
@@ -53,6 +56,10 @@ function VideoSceneManager:SetVideoClipVisiable(clipId,bVisiable)
 end
 
 
+-------Time Line---------
+function VideoSceneManager:GetTotalTime()
+    VideoSceneModel:GetTotalTime()
+end
 
 ----------------Seek Frame-------------
 function VideoSceneManager:Seek(frameIndex)
@@ -61,12 +68,12 @@ end
 
 
 -------Add Transition------
-function VideoSceneManager:AddTransition(trackId,transitionInfo)
-    VideoSceneModel:AddTransition(trackId,transitionInfo)
+function VideoSceneManager:AddTransition(transitionInfo)
+    return VideoSceneModel:AddTransition(transitionInfo)
 end
 
-function VideoSceneManager:SetTransitionProgress(progress)
-    VideoSceneModel:SetTransitionProgress(progress)
+function VideoSceneManager:DeleteTransition(id)
+    VideoSceneModel:DeleteTransition(id)
 end
 
 return VideoSceneManager

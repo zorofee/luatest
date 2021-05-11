@@ -51,6 +51,7 @@ function VideoSceneView:Initialize()
     self.videoFrameItemList = {}  --vector<VideoFrameItem>
 
     self.videoClipInfoMap = {}
+    self.videoSceneTransitionMap = {}
 end
 
 
@@ -117,8 +118,11 @@ function VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
     else
         return false
     end
+end
 
-
+function VideoSceneView:DeleteVideoClip(clipId)
+    self.videoClipQuadMap[clipId]:SetActive(false)
+    self.videoClipSceneMap[clipId]:DeleteMediaNode(clipId)
 end
 
 
@@ -153,13 +157,40 @@ end
 
 
 
-------------Seek Frame---------
+---------------------Time Line-----------------------
+function VideoSceneView:GetTotalTime()
+    for trackId,trackScene in pairs(self.trackSceneMap) do
+        WARNING("TrackId : " .. trackId .. " , TotalTime : " .. trackScene:GetTotalTime()) 
+    end
+end
+
+
+-----------------Transition: Add,Delete,Modify,Copy-------------------
+function VideoSceneView:AddTransition(transitionInfo)
+    local frontVideoId = transitionInfo.frontVideoId
+    local backVideoId = transitionInfo.frontVideoId
+    local clipScene = self.videoClipSceneMap[frontVideoId]
+
+    self.videoSceneTransitionMap[transitionInfo.id] = clipScene
+    clipScene:AddTransitionNode(transitionInfo)
+end
+
+function VideoSceneView:DeleteTransition(id)
+    self.videoSceneTransitionMap[id]:DeleteTransition(id)
+end
+
+
+
+
+
+-------------------------Seek Frame--------------------
 function VideoSceneView:Seek(frameIndex)
     --对每个scene中的medianode进行seek
     for trackId,trackScene in pairs(self.trackSceneMap) do
         local clipId = trackScene:Seek(frameIndex)
         if clipId ~= nil then
-            WARNING("--------SEEK FRAME---------frame:" .. frameIndex ..",track: " .. trackId .. " , clip:" .. clipId .. "   " .. 
+            WARNING("--------SEEK FRAME---------frame:" .. 
+                frameIndex ..",track: " .. trackId .. " , clip:" .. clipId .. "   " .. 
                 tostring(self.videoClipInfoMap[clipId].pos) .. "   " .. tostring(self.videoClipInfoMap[clipId].scale))
             
             self.trackQuadMap[trackId]:SetLocalPosition(self.videoClipInfoMap[clipId].pos)
@@ -170,38 +201,6 @@ function VideoSceneView:Seek(frameIndex)
         end
     end
 end
-
------------Add Transition----------
-function VideoSceneView:AddTransition(trackId,transitionInfo)
-
-    --隐藏原先的videoquad
-    self.videoClipQuadMap[transitionInfo.frontVideoId]:SetActive(false) 
-    --self.videoClipQuadMap[transitionInfo.backVideoId]:SetActive(false)
-
-    --新建两个fbo和两个videoquad用来显示需要转场的前后两段视频帧画面
-    local fbo1 = CreateRenderTarget()
-    local fbo2 = CreateRenderTarget()
-    self.trackSceneMap[trackId]:AddTransitionNode(transitionInfo,fbo1,fbo2)
-
-    local transitionQuad1 = self.mainScene:CreateVideoQuad(trackId + 1,fbo1.color)
-    transitionQuad1:SetLocalPosition(self.videoClipInfoMap[transitionInfo.frontVideoId].pos)    --pos 和 scale应该与clip保持一致
-    transitionQuad1:SetLocalScale(self.videoClipInfoMap[transitionInfo.frontVideoId].scale)    
-    transitionQuad1:SetActive(true)
-    transitionQuad1:SetLayer("transition1")
-
-    local transitionQuad2 = self.mainScene:CreateVideoQuad(trackId + 1,fbo2.color)
-    transitionQuad2:SetLocalPosition(self.videoClipInfoMap[transitionInfo.backVideoId].pos)
-    transitionQuad2:SetLocalScale(self.videoClipInfoMap[transitionInfo.backVideoId].scale)
-    transitionQuad2:SetActive(true)
-    transitionQuad2:SetLayer("transition2")
-
-end
-
-function VideoSceneView:SetTransitionProgress(progress)
-    self.mainScene:SetTransitionProgress(progress)
-end
-
-
 
 
 return VideoSceneView
