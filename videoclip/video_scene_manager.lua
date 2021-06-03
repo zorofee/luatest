@@ -56,20 +56,34 @@ function VideoSceneManager:SetVideoClipVisiable(clipId,bVisiable)
 end
 
 
--------Time Line---------
-function VideoSceneManager:GetTotalTime()
-    VideoSceneModel:GetTotalTime()
+--插入
+function VideoSceneManager:InsertVideoClip(trackId,frontId,params)
+    return VideoSceneModel:InsertVideoClip(trackId,frontId,params)
 end
 
-----------------Seek Frame-------------
-function VideoSceneManager:Seek(frameIndex)
-    VideoSceneModel:Seek(frameIndex)
+--复制
+function VideoSceneManager:CopyVideoClip(originId)
+    return VideoSceneModel:CopyVideoClip(trackId,frontId,params)
 end
 
+--裁剪
+function VideoSceneManager:CropVideoClip(clipId,startTs,endTs)
+    VideoSceneModel:CropVideoClip(clipId,startTs,endTs)
+end
 
--------Add Transition------
-function VideoSceneManager:AddTransition(transitionInfo)
-    return VideoSceneModel:AddTransition(transitionInfo)
+--分割
+function VideoSceneManager:SplitVideoClip(originId,splitTs)
+    VideoSceneModel:SplitVideoClip(originId,splitTs)
+end
+
+--变速
+function VideoSceneManager:SetClipSpeed(clipId,speed)
+    VideoSceneModel:SetClipSpeed(clipId,speed)
+end
+
+--转场
+function VideoSceneManager:AddTransition(clip1,clip2,inPath)
+    return  VideoSceneModel:AddTransition(clip1,clip2,inPath)
 end
 
 function VideoSceneManager:DeleteTransition(id)

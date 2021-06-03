@@ -12,19 +12,30 @@ function MediaNode:new(scene,path)
     mediaComponent.renderInfo[1].chosen = true
     mediaComponent.renderInfo[1].loop = true
     mediaComponent:Play()
+    
+    --self:BindMainTexture("DEVICE_CAPTURE")
 
     self.media = mediaComponent
-    self.duration = self.media:GetDuration(0)
+    self.path = path
+    --self.duration = self.media:GetDuration(0)
 end
 
 
-function MediaNode:Seek(timePointInMs)
-   -- local ret = self.media:SeekFrame(timePointInMs)
+function MediaNode:Seek(timePointInMs,speed)
+    --local ret = self.media:SeekFrame(timePointInMs)
+    WARNING("[MediaNode] Seek     Ts: " .. timePointInMs .. ", Speed : " .. speed .. ", path : " .. self.path)
+    --self.media:GetDuration(timePointInMs)
+end
+
+function MediaNode:SeekTo(ts)
+    WARNING("[MediaNode] Seek     Ts: " .. ts ..  ", path : " .. self.path)
+    self.media:GetDuration(ts)
+    --self.media:Pause()
 end
 
 
 function MediaNode:GetDuration()
-    return self.duration/100000    --4300 000  返回的单位是微秒,
+    return self.duration           --单位是微秒,
 end
 
 return MediaNode

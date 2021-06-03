@@ -6,16 +6,19 @@ local apolloengine = require "apollocore"
 local mathfunction = require "mathfunction"
 local VideoScene = require "videoclip.video_scene"
 local QuadNode = require "videoclip.quadnode"
-local TransitionNode = require "videoclip.transitionnode"
 local MainScene = VideoScene:extend()
 
+local DefaultWidth = 540.0
+local DefaultHeight = 960.0
 function MainScene:new()
 
     MainScene.super:new()
+    
+    WARNING("[ZHAOWANFEI TEST] CREATE MAIN SCENE")
     self.sceneName = "MainScene"
-    self.mainCamera:SetClearColor(mathfunction.Color(0.0,0.5,0.0,1))
+    self.mainCamera:SetClearColor(mathfunction.Color(0.9,0.9,0.0,1))
 
-    --self:_CreateBackgroundNode()
+    self:_CreateBackgroundNode()
     
     --mainscene渲染输出到cutterScene下的main quad
     local mainFbo = CreateRenderTarget()
@@ -32,17 +35,12 @@ end
 
 
 function MainScene:SetCanvasAspectRatio(ratioX,ratioY)
-    --self.mainCamera:SetCameraResolution(ratioX,ratioY)
-    --self.mainQuad:SetLocalScale(mathfunction.vector3(0.32,0.18,1.0))
     for i=1,#self.renderoNodeList do
-        local scaleX = mathfunction.vector1(540.0 / ratioX)
-        local scaleY = mathfunction.vector1(960.0 / ratioY)
+        local scaleX = mathfunction.vector1(DefaultWidth / ratioX)
+        local scaleY = mathfunction.vector1(DefaultHeight / ratioY)
         self.renderoNodeList[i]:SetParameter("x",scaleX)
         self.renderoNodeList[i]:SetParameter("y",scaleY)
-        --self.renderoNodeList[i]:SetLocalScale(mathfunction.vector3(540.0 / ratioX,960.0 / ratioY,1.0))
     end
-
-    --self.mainCamera:SetCameraResolution(mathfunction.vector2(ratioX,ratioY))
 end
 
 
@@ -54,7 +52,6 @@ end
 function MainScene:SetCanvasBGColor(color)
     self.mainCamera:SetClearColor(color)
 end
-
 
 
 function MainScene:CreateVideoQuad(trackId,fbo)
@@ -69,21 +66,16 @@ function MainScene:CreateVideoQuad(trackId,fbo)
 end
 
 
-function MainScene:SetTransitionProgress(progress)
-    self.transition:SetParameter("_Progress",progress)
-end
-
-
-
 function MainScene:_CreateBackgroundNode()
     local backgroundNode = QuadNode(self.videoScene)
     backgroundNode:SetLayer("Background")
     backgroundNode:SetRenderOrder(0)
-    backgroundNode:SetLocalPosition(mathfunction.vector3(0.2,0.2,0))
-    backgroundNode:SetLocalScale(mathfunction.vector3(0.9,0.9,1))
+    --backgroundNode:SetLocalPosition(mathfunction.vector3(0.2,0.2,0))
+    --backgroundNode:SetLocalScale(mathfunction.vector3(0.5,0.5,1))
     self.background = backgroundNode
     self.mainCamera:AddLayerMask("Background");
 end
+
 
 
 

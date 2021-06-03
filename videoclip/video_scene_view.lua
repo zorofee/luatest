@@ -18,22 +18,21 @@ local VideoSceneView = {}
 2.mainScene                           |
     --MainCamera  (GlobalFilter) -----|
     --BgQuad      (ClearColor or Image)
-    --TransitionQuad (Fbo From Transition Scene) <|-----|
-    --VideoQuad01 (VideoScene01) <|----|                |
-    --VideoQuad02 (VideoScene02)       |                |
-                                       |                |
-                                      fbo               |
-3.videoScene01                         |               fbo
-    --MainCamera(VideoFilter)----------|                |
-    --QuadNode(DEVICE_CAPTURE)                          |
-                                                        |
-4.transitionScene                                       |
-    --MainCamera    ------------------------------------|
-    --QuadNode(TransitionMaterial)
+    --VideoQuad01 (VideoScene01) <|----|                
+    --VideoQuad02 (VideoScene02)       |               
+                                       |           
+                                      fbo               
+3.videoScene01                         |              
+    --MainCamera(VideoFilter)----------|                
+    --MediaNode01(MediaComponent)                           
+    --MediaNode02(MediaComponent)        
+    --TransitionQuad <|---------------------------------|------|
+                                                      fbo1    fbo2
+    --TransitionCamera01  ------------------------------|      |
+    --TransitionCamera02  -------------------------------------|
 
 
-
-二、MainScene中的渲染层级
+二、VideoScene中的渲染层级
     background < video quads < transition quad
 ]]
 
@@ -41,17 +40,12 @@ local VideoSceneView = {}
 function VideoSceneView:Initialize()
     --view层缓存场景相关数据
     self.mainScene = {}
-    self.trackSceneMap = {}      --<trackId,videoScene>
-    self.trackQuadMap = {}       --<trackId,videoQuad>
-
-    self.videoClipQuadMap = {}   --<clipId,videoQuad>
-    self.videoClipSceneMap = {}  --<clipId,videoScene>
-
-    --帧数据
-    self.videoFrameItemList = {}  --vector<VideoFrameItem>
-
-    self.videoClipInfoMap = {}
-    self.videoSceneTransitionMap = {}
+    self.trackSceneMap = {}           --<trackId,videoScene>
+    self.trackQuadMap = {}            --<trackId,videoQuad>
+    self.videoClipQuadMap = {}        --<clipId,videoQuad>
+    self.videoClipSceneMap = {}       --<clipId,videoScene>
+    self.videoClipTransformMap = {}   --<clipId,transform>
+    self.videoClipInfoMap = {}        --<clipId,clipInfo>
 end
 
 
@@ -86,7 +80,7 @@ end
 
 
 ------添加轨道-----
-function VideoSceneView:AddVideoTrack(trackId,trackInfo)
+function VideoSceneView:AddVideoTrack(trackId)
     WARNING("[Add Video Track]" .. trackId)
     --新增一条视频轨道,需要创建新的VideoScene
     local videoScene = VideoScene()
@@ -103,16 +97,16 @@ end
 
 ------添加视频----
 function VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
+
     local videoScene = self.trackSceneMap[trackId]
     local videoQuad = self.trackQuadMap[trackId]
     if videoScene ~= nil then
         videoScene:AddMediaNode(clipInfo)
+        videoQuad:SetRenderOrder(trackId)
         videoQuad:SetActive(true)
 
         self.videoClipQuadMap[clipId] = videoQuad
         self.videoClipSceneMap[clipId] = videoScene
-        WARNING("[Add Video Clip]" .. clipId .. " ,sceneNum: " .. #self.videoClipSceneMap)
-
         self.videoClipInfoMap[clipId] = clipInfo
         return true
     else
@@ -120,7 +114,7 @@ function VideoSceneView:AddVideoClip(trackId,clipId,clipInfo)
     end
 end
 
-function VideoSceneView:DeleteVideoClip(clipId)
+function VideoSceneView:RemoveVideoClip(clipId)
     self.videoClipQuadMap[clipId]:SetActive(false)
     self.videoClipSceneMap[clipId]:DeleteMediaNode(clipId)
 end
@@ -132,11 +126,27 @@ function VideoSceneView:UpdateClipPosition(clipId,pos)
 end
 
 function VideoSceneView:UpdateClipRotation(clipId,rot)
-    self.videoClipQuadMap[clipId]:SetLocalRotation(rot)
+    local rotation = mathfunction.Quaternion()
+    rotation:RotateXYZ(rot:x(),rot:y(),rot:z())
+    self.videoClipQuadMap[clipId]:SetLocalRotation(rotation)
 end
 
 function VideoSceneView:UpdateClipScale(clipId,scale)
     self.videoClipQuadMap[clipId]:SetLocalScale(scale)
+end
+
+function VideoSceneView:UpdateClipTransform(clipId)
+
+    local transform = self.videoClipTransformMap[clipId]
+    self:UpdateClipPosition(clipId,transform.pos)
+    self:UpdateClipRotation(clipId,transform.rotation)
+    self:UpdateClipScale(clipId,transform.scale)
+    self.videoClipQuadMap[clipId]:SetActive(true)
+end
+
+function VideoSceneView:SetClipTransform(clipId,transform)
+    self.videoClipTransformMap[clipId] = transform
+    self:UpdateClipTransform(clipId)
 end
 
 
@@ -156,51 +166,112 @@ end
 
 
 
+--Todo: 镜像翻转
+function VideoSceneView:SetClipMirror(clipId)
 
----------------------Time Line-----------------------
-function VideoSceneView:GetTotalTime()
-    for trackId,trackScene in pairs(self.trackSceneMap) do
-        WARNING("TrackId : " .. trackId .. " , TotalTime : " .. trackScene:GetTotalTime()) 
-    end
+end
+
+--Todo: 设置静音
+function VideoSceneView:SetClipAudioMute(clipId,bMute)
+
 end
 
 
------------------Transition: Add,Delete,Modify,Copy-------------------
+
+--转场  Todo : Delete,Modify,Copy
 function VideoSceneView:AddTransition(transitionInfo)
     local frontVideoId = transitionInfo.frontVideoId
     local backVideoId = transitionInfo.frontVideoId
-    local clipScene = self.videoClipSceneMap[frontVideoId]
+    local videoScene = self.videoClipSceneMap[frontVideoId]
 
-    self.videoSceneTransitionMap[transitionInfo.id] = clipScene
-    clipScene:AddTransitionNode(transitionInfo)
+    self.videoClipSceneMap[transitionInfo.clipId] = videoScene
+    self.videoClipInfoMap[transitionInfo.clipId] = transitionInfo
+    
+    videoScene:AddTransitionNode(transitionInfo)
 end
 
 function VideoSceneView:DeleteTransition(id)
-    self.videoSceneTransitionMap[id]:DeleteTransition(id)
+    self.videoClipSceneMap[id]:DeleteTransition(id)
 end
 
 
+--先清除所有显示的quad以及scene中的状态, 后续可优化
+function VideoSceneView:ClearFbo()
+    for id,quad in pairs(self.videoClipQuadMap) do
+        quad:SetActive(false)
+    end
+
+    for id,scene in pairs(self.trackSceneMap) do
+        scene:ClearFbo()
+    end
+
+end
 
 
+--[[
+ids:所有在当前时间戳需要显示的VideoClipId; ts:当前时间戳
+1.关闭所有的VideoQuad
+2.将需要显示的VideoQuad激活,并更新位置
+3.找到对应的VideoScene,通过Scene中的medianode完成seekframe
 
--------------------------Seek Frame--------------------
-function VideoSceneView:Seek(frameIndex)
-    --对每个scene中的medianode进行seek
-    for trackId,trackScene in pairs(self.trackSceneMap) do
-        local clipId = trackScene:Seek(frameIndex)
-        if clipId ~= nil then
-            WARNING("--------SEEK FRAME---------frame:" .. 
-                frameIndex ..",track: " .. trackId .. " , clip:" .. clipId .. "   " .. 
-                tostring(self.videoClipInfoMap[clipId].pos) .. "   " .. tostring(self.videoClipInfoMap[clipId].scale))
-            
-            self.trackQuadMap[trackId]:SetLocalPosition(self.videoClipInfoMap[clipId].pos)
-            self.trackQuadMap[trackId]:SetLocalScale(self.videoClipInfoMap[clipId].scale)
-            self.trackQuadMap[trackId]:SetActive(true)
+todo:SeekFrame需要根据换算成相对时间戳
+]]
+function VideoSceneView:ProcessVideo(ids,ts)
+    for i=1,#ids do
+        local id = ids[i]
+        self:UpdateClipTransform(id)
+        self.videoClipSceneMap[id]:SeekFrame(id,ts)
+    end
+
+end
+
+--[[
+ids:所有在当前时间戳需要显示的TransitionClipId; ts:当前时间戳
+1.由于转场帧一定发生在VideoClip帧后,因此不需要做状态上的重置
+2.找到对应的VideoScene,通过Scene中的medianode完成seekframe; 转场可能需要seek前后两个视频的帧
+]]
+function VideoSceneView:ProcessTransition(ids,ts)
+    for i=1,#ids do
+        local id = ids[i]
+        local info = self.videoClipInfoMap[id]
+        local progress = (ts - info.logicStartTs)/(info.logicEndTs - info.logicStartTs)
+
+        --update video quad
+        if progress <= 0.5 then
+            self:UpdateClipTransform(info.frontVideoId)
         else
-            self.trackQuadMap[trackId]:SetActive(false)
+            self:UpdateClipTransform(info.backVideoId)
         end
+
+
+        --update video frame
+        if info.strategy == 1 then
+            --同时只有一个clip在渲染
+            if progress <= 0.5 then
+                self.videoClipSceneMap[id]:SeekFrame(info.frontVideoId,ts)
+            else
+                self.videoClipSceneMap[id]:SeekFrame(info.backVideoId,ts)
+            end
+
+        elseif info.strategy == 2 then
+            --同时有两个clip在渲染
+            self.videoClipSceneMap[id]:SeekFrame(info.frontVideoId,ts)
+            self.videoClipSceneMap[id]:SeekFrame(info.backVideoId,ts)
+        end
+
+        --update transition
+        self.videoClipSceneMap[id]:UpdateTransition(id,ts)
     end
 end
+
+
+
+
+
+function VideoSceneView:SeekTo(clipId,ts)
+    self.videoClipSceneMap[clipId]:SeekTo(clipId,ts)
+end
+
 
 
 return VideoSceneView

@@ -21,3 +21,21 @@ function CreateRenderTarget()
     return fbo
 end
 
+
+function DeepCopy(srcTable)
+    if srcTable == nil then
+        return nil
+    end
+
+    local dstTable = {}
+    for k,v in pairs(srcTable) do
+        if type(v) == 'table' then
+            dstTable[k] = table.DeepCopy(v)
+        else
+            dstTable[k] = v
+        end
+    end
+    return dstTable
+end
+
+
