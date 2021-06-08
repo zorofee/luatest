@@ -98,8 +98,8 @@ typedef struct FClipInfo ClipInfo;
 
 -(void)createVenusSceneView
 {
-    m_venusView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, viewRectW, viewRectH)];
-    [m_venusView setBackgroundColor:UIColor.greenColor];
+    m_venusView = [[UIView alloc] initWithFrame:CGRectMake(50, 50, 300, 200)];
+    [m_venusView setBackgroundColor:UIColor.brownColor];
     [self.view addSubview:m_venusView];
     [VenusWrapper attachToTest:m_venusView];
 }
@@ -313,22 +313,13 @@ typedef struct FClipInfo ClipInfo;
     CGFloat x2 = m_layer2Add.center.x + m_layer2Add.bounds.size.width/2 + 5;
     CGPoint containerSize = CGPointMake(350, 40);
     
-    layerContainer01 = [self createStackView:CGRectMake(x1, y1, containerSize.x, containerSize.y)];
-    layerContainer02 = [self createStackView:CGRectMake(x2, y2, containerSize.x, containerSize.y)];
+    layerContainer01 = [self createStackView:CGRectMake(x1, y1, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
+    layerContainer02 = [self createStackView:CGRectMake(x2, y2, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
     
     [self.view addSubview:layerContainer01];
     [self.view addSubview:layerContainer02];
 }
 
-
-- (UIStackView*) createStackView:(CGRect) frame
-{
-    UIStackView* mView = [[UIStackView alloc] initWithFrame:frame];
-    mView.axis = UILayoutConstraintAxisHorizontal;
-    mView.distribution = UIStackViewDistributionFillEqually;
-    mView.spacing = 5;
-    return mView;
-}
 
 - (void) insertLayerClipBtn:(UIStackView*)layer:(UIButton*)btn
 {
@@ -344,13 +335,14 @@ typedef struct FClipInfo ClipInfo;
 {
     [btn setHidden:true];
     [layer removeArrangedSubview:btn];
+
     layer.frame = CGRectMake(layer.frame.origin.x, layer.frame.origin.y, layer.arrangedSubviews.count * 50,layer.frame.size.height);
 }
 
 
 //layer1 上添加clip
 - (void) onLayer1AddClick:(id)sender{
-    
+
     int trackID = 1;
     [self onAddVideoClip:trackID];
 }
@@ -516,14 +508,12 @@ typedef struct FClipInfo ClipInfo;
      
     UIStackView* splitGroup = [[UIStackView alloc]init];
     splitGroup.axis = UILayoutConstraintAxisHorizontal;
-    //contentStack1.distribution = UIStackViewDistributionFillEqually;
     splitGroup.spacing = 2;
     [splitGroup addArrangedSubview:splitValueText];
     [splitGroup addArrangedSubview:splitSlider];
      
     UIStackView* speedGroup = [[UIStackView alloc]init];
     speedGroup.axis = UILayoutConstraintAxisHorizontal;
-    //contentStack1.distribution = UIStackViewDistributionFillEqually;
     speedGroup.spacing = 2;
     [speedGroup addArrangedSubview:speedValueText];
     [speedGroup addArrangedSubview:speedSlider];
@@ -531,7 +521,6 @@ typedef struct FClipInfo ClipInfo;
     
     UIStackView* cropGroup = [[UIStackView alloc]init];
     cropGroup.axis = UILayoutConstraintAxisHorizontal;
-    //contentStack1.distribution = UIStackViewDistributionFillEqually;
     cropGroup.spacing = 2;
     [cropGroup addArrangedSubview:cropValueText];
     [cropGroup addArrangedSubview:cropSlider];
@@ -711,4 +700,13 @@ typedef struct FClipInfo ClipInfo;
     return label;
 }
 
+
+- (UIStackView*) createStackView:(CGRect) frame:(UILayoutConstraintAxis)axis
+{
+    UIStackView* mView = [[UIStackView alloc] initWithFrame:frame];
+    mView.axis = axis;
+    mView.distribution = UIStackViewDistributionFillEqually;
+    mView.spacing = 5;
+    return mView;
+}
 @end
