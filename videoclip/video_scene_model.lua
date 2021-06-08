@@ -288,9 +288,14 @@ function VideoSceneModel:SetCanvasAspectRatio(ratioX,ratioY)
     VideoSceneView:SetCanvasAspectRatio(ratioX,ratioY)
 end
 
+function VideoSceneModel:SetCanvasBGImage(path)
+    VideoSceneView:SetCanvasBGImage(path)
+end
 
-function VideoSceneModel:SetCanvasBGColor(color)
-    VideoSceneView:SetCanvasBGColor2(color)
+
+function VideoSceneModel:SetCanvasBGColor(r,g,b,a)
+    WARNING("[Video Test]:" .. r .. " " .. g .. " " .. b .. " " .. " " .. a)
+    VideoSceneView:SetCanvasBGColor(mathfunction.Color(r,g,b,a))
 end
 
 function VideoSceneModel:AddVideoSceneFilter(clipId,effectInfo)

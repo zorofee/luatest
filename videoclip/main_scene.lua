@@ -8,8 +8,8 @@ local VideoScene = require "videoclip.video_scene"
 local QuadNode = require "videoclip.quadnode"
 local MainScene = VideoScene:extend()
 
-local DefaultWidth = 540.0
-local DefaultHeight = 960.0
+local DefaultWidth = 200.0
+local DefaultHeight = 300.0
 function MainScene:new()
 
     MainScene.super:new()
@@ -45,7 +45,20 @@ end
 
 
 function MainScene:SetCanvasBGImage(path)
-
+    --local path = "root:test.png"
+    local tex = apolloengine.TextureEntity()
+    tex:PushMetadata(apolloengine.TextureFileMetadata(
+        apolloengine.TextureEntity.TU_STATIC,
+        apolloengine.TextureEntity.PF_AUTO,1,false,
+        apolloengine.TextureEntity.TW_CLAMP_TO_EDGE,
+        apolloengine.TextureEntity.TW_CLAMP_TO_EDGE,
+        apolloengine.TextureEntity.TF_LINEAR,
+        apolloengine.TextureEntity.TF_LINEAR,
+        path))
+    
+    tex:SetJobType(venuscore.IJob.JT_SYNCHRONOUS)
+    tex:CreateResource()
+    self.background:SetParameter("_MainTex",tex)
 end
 
 
@@ -71,10 +84,13 @@ function MainScene:_CreateBackgroundNode()
     backgroundNode:SetLayer("Background")
     backgroundNode:SetRenderOrder(0)
     --backgroundNode:SetLocalPosition(mathfunction.vector3(0.2,0.2,0))
-    --backgroundNode:SetLocalScale(mathfunction.vector3(0.5,0.5,1))
+    backgroundNode:SetLocalScale(mathfunction.vector3(0.8,0.8,1))
     self.background = backgroundNode
     self.mainCamera:AddLayerMask("Background");
+    
+    
 end
+
 
 
 
