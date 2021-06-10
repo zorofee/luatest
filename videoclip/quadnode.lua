@@ -24,14 +24,16 @@ end
 
 function QuadNode:CreateResource(materialpath, flip, flat)
     self.render:PushMetadata(
-        --这里的quad shader有修改过
-        apolloengine.RenderObjectMaterialMetadata(apolloengine.PathMetadata("comm:documents/shaders/opaque/quad_fixed.material"))
-    )
-
+      apolloengine.RenderObjectMaterialMetadata(
+        apolloengine.PathMetadata(materialpath)));
+    flip = flip or false;
+    flat = flat or false;
     self.render:PushMetadata(
-        apolloengine.RenderObjectMeshFileMetadate("comm:documents/basicobjects/quad/data/plane001.mesh")
-    )
-    self.render:CreateResource();
+          apolloengine.RenderObjectMeshMetadate( 
+              apolloengine.RenderComponent.RM_TRIANGLES,      
+        apolloengine.QuadVertexMetadata(flip, flat),
+        apolloengine.QuadIndicesMetadata()));
+    return self.render:CreateResource();
 end
 
 
