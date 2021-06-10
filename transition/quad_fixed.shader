@@ -64,7 +64,8 @@ v2f vert(appdata v)
 
 void frag(in v2f i, out float4 mainColor : SV_Target0)
 {
-	mainColor = _MainTex.Sample(_MainSampler, i.uv);
+	//mainColor = _MainTex.Sample(_MainSampler, i.uv);
+	mainColor = float4(1.0, 1.0, 0.0, 1.0);
 }
 ENDCG
 #END
