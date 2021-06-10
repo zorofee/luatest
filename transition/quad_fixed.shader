@@ -45,13 +45,13 @@ v2f vert(appdata v)
 	v2f o;
 	float4 pos = v.vertex * (1.0 / v.vertex.w);
 	
-	float4x4 scaleMat = {
-        x,0,0,0,
-        0,y,0,0,
-        0,0,1,0,
-		0,0,0,1
-    };
-	pos = mul(pos, scaleMat);
+	//float4x4 scaleMat = {
+ //       x,0,0,0,
+ //       0,y,0,0,
+ //       0,0,1,0,
+	//	0,0,0,1
+ //   };
+	//pos = mul(pos, scaleMat);
 	pos = ObjectToClipPos(pos);
 
     o.vertex = UniformNDC(pos);
