@@ -46,6 +46,7 @@ end
 
 function MainScene:SetCanvasBGImage(path)
     --local path = "root:test.png"
+    WARNING("[SetCanvasBGImage]:" .. path)
     local tex = apolloengine.TextureEntity()
     tex:PushMetadata(apolloengine.TextureFileMetadata(
         apolloengine.TextureEntity.TU_STATIC,

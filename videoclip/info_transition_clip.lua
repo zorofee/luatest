@@ -22,4 +22,21 @@ function TransitionClip:new(transitionId,params)
     LOG("[TransitionClip] " .. self.clipId .. ",trackId: " .. self.trackId .. ",logicStartTs: " .. self.logicStartTs .. ",logicEndTs: " .. self.logicEndTs .. ",Duration :" .. self.duration )
 end
 
+
+function TransitionClip:Print()
+    LOG(
+            "clipId: " .. self.clipId ..
+            ",Track: " .. self.trackId ..
+            ",type: " .. self.type ..
+            ",frontVideoId: " .. self.frontVideoId ..
+            ",backVideoId: " .. self.backVideoId ..
+            ",originStartTs: " .. self.originStartTs ..
+            ",originEndTs: " .. self.originEndTs ..
+            ",logicStartTs: " .. self.logicStartTs ..
+            ",logicEndTs: " .. self.logicEndTs
+            )
+
+end
+
+
 return TransitionClip

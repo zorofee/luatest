@@ -7,6 +7,10 @@
 
 #import "VideoCutViewController.h"
 #import "VenusWrapper.h"
+#import "UIViewFactory.h"
+#import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 #define TEST_DURATION 100
 #define TEST_MAX_PTS 1000
@@ -17,6 +21,8 @@ struct FClipInfo {
     int startTs;
     int duration;
     int endTs;
+    int width;
+    int height;
 };
 typedef struct FClipInfo ClipInfo;
 
@@ -53,22 +59,21 @@ typedef struct FClipInfo ClipInfo;
     UIView* subOperationMenu;
     UILabel* selectClipIdText;
 
-    
 
-    //<clipId,UIButton*>
     NSMutableDictionary* m_clipBtnMap;
-    
-    //<clipId,ClipInfo>
     NSMutableDictionary* m_clipInfoMap;
     
     //当前激活显示的clip
     int activeClipId;
+    //当前选择的轨道id
+    int selectedTrackId;
 
 
     CGFloat viewRectW;
     CGFloat viewRectH;
     
-    
+    UIImagePickerController* videoPicker;
+
 }
 @end
 
@@ -92,13 +97,14 @@ typedef struct FClipInfo ClipInfo;
     [self createMainOperation];
     [self createSubOperation];
     [self createLayerContainer];
+    [self createAlbumPicker];
 }
 
 
 
 -(void)createVenusSceneView
 {
-    m_venusView = [[UIView alloc] initWithFrame:CGRectMake(50, 50, 300, 200)];
+    m_venusView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, viewRectH, viewRectH)];
     [m_venusView setBackgroundColor:UIColor.brownColor];
     [self.view addSubview:m_venusView];
     [VenusWrapper attachToTest:m_venusView];
@@ -113,7 +119,7 @@ typedef struct FClipInfo ClipInfo;
     CGFloat btnWidth = 60, btnHeight = 40;
 
     //UISlider
-    seekPtsSlider = [self createSlider:0 :TEST_MAX_PTS];//[[UISlider alloc]init];
+    seekPtsSlider = [UIViewFactory createSlider:0 :TEST_MAX_PTS];//[[UISlider alloc]init];
     seekPtsSlider.frame = CGRectMake(startPosX, startPosY, viewRectW, 40);
     seekPtsSlider.value=TEST_MAX_PTS / 2;
     [seekPtsSlider addTarget:self action:@selector(onProgress) forControlEvents:UIControlEventValueChanged];
@@ -121,21 +127,21 @@ typedef struct FClipInfo ClipInfo;
 
 
     startPosY += 25;
-    seekPtsSliderText = [self createLabel:[NSString stringWithFormat:@"pts:%d",(int)TEST_MAX_PTS/2]];
+    seekPtsSliderText = [UIViewFactory createLabel:[NSString stringWithFormat:@"pts:%d",(int)TEST_MAX_PTS/2]];
     seekPtsSliderText.frame = CGRectMake(viewRectW/2,startPosY, 80, 40);
     [self.view addSubview:seekPtsSliderText];
 
 
     //layer button
     startPosY += 60;
-    m_layer1Add = [self createButtonWithTitle:@"轨1 +"];
+    m_layer1Add = [UIViewFactory createButtonWithTitle:@"轨1 +"];
     [m_layer1Add setFrame:CGRectMake(startPosX, startPosY, btnWidth, btnHeight)];
     [m_layer1Add setBackgroundColor:UIColor.darkGrayColor];
     [self.view addSubview:m_layer1Add];
     
 
     startPosY += 50;
-    m_layer2Add = [self createButtonWithTitle:@"轨2 +"];
+    m_layer2Add = [UIViewFactory createButtonWithTitle:@"轨2 +"];
     [m_layer2Add setFrame:CGRectMake(startPosX, startPosY, btnWidth, btnHeight)];
     [m_layer2Add setBackgroundColor:UIColor.darkGrayColor];
     [self.view addSubview:m_layer2Add];
@@ -313,15 +319,15 @@ typedef struct FClipInfo ClipInfo;
     CGFloat x2 = m_layer2Add.center.x + m_layer2Add.bounds.size.width/2 + 5;
     CGPoint containerSize = CGPointMake(350, 40);
     
-    layerContainer01 = [self createStackView:CGRectMake(x1, y1, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
-    layerContainer02 = [self createStackView:CGRectMake(x2, y2, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
+    layerContainer01 = [UIViewFactory createStackView:CGRectMake(x1, y1, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
+    layerContainer02 = [UIViewFactory createStackView:CGRectMake(x2, y2, containerSize.x, containerSize.y):UILayoutConstraintAxisHorizontal];
     
     [self.view addSubview:layerContainer01];
     [self.view addSubview:layerContainer02];
 }
 
 
-- (void) insertLayerClipBtn:(UIStackView*)layer:(UIButton*)btn
+- (void) insertLayerClipBtn:(UIStackView*)layer :(UIButton*)btn
 {
     [layer addArrangedSubview:btn];
     if(layer.frame.size.width <= 350)
@@ -331,7 +337,7 @@ typedef struct FClipInfo ClipInfo;
 
 }
 
-- (void) deleteLayerClipBtn:(UIStackView*)layer:(UIButton*)btn
+- (void) deleteLayerClipBtn:(UIStackView*)layer :(UIButton*)btn
 {
     [btn setHidden:true];
     [layer removeArrangedSubview:btn];
@@ -343,32 +349,34 @@ typedef struct FClipInfo ClipInfo;
 //layer1 上添加clip
 - (void) onLayer1AddClick:(id)sender{
 
-    int trackID = 1;
-    [self onAddVideoClip:trackID];
+    selectedTrackId = 1;
+    //[self onAddVideoClip:trackID];
+    [self presentViewController:videoPicker animated:YES completion:nil];
 }
 
 //layer2 上添加clip
 - (void) onLayer2AddClick:(id)sender{
-    int trackID = 2;
-    [self onAddVideoClip:trackID];
+    selectedTrackId = 2;
+    //[self onAddVideoClip:trackID];
+    [self presentViewController:videoPicker animated:YES completion:nil];
 }
 
 - (void) onAddVideoClip:(int)trackID
 {
     int startTs = (int)seekPtsSlider.value;//+= 20;
     int duration = TEST_DURATION;
-    int clipId = [VenusWrapper addVideoClip:trackID:startTs:duration];
-    [self addVideoClipInfoAndView:trackID:clipId:startTs:duration];
+    int clipId = [VenusWrapper addVideoClip:trackID:startTs:duration:1280:720:@"root:111.mp4"];
+    [self addVideoClipInfoAndView:trackID:clipId:startTs:duration:1280:720];
     activeClipId = clipId;
     
 }
 
 //插入一个clip button
--(void) addVideoClipInfoAndView:(int)trackId:(int)clipId:(int)startTs:(int)duration
+-(void) addVideoClipInfoAndView:(int)trackId :(int)clipId :(int)startTs :(int)duration :(int)width :(int) height
 {
     //add clip button
     NSString* clipInfo = [NSString stringWithFormat:@"%d(%d,%d)",clipId,startTs,startTs + duration];
-    UIButton* btn = [self createButtonWithTitle:clipInfo];
+    UIButton* btn = [UIViewFactory createButtonWithTitle:clipInfo];
     [btn addTarget:self action:@selector(onClipBtnClicked:) forControlEvents:UIControlEventTouchUpInside];
     
     NSString* key = [NSString stringWithFormat:@"%d",clipId];
@@ -393,6 +401,8 @@ typedef struct FClipInfo ClipInfo;
     info.clipId = clipId;
     info.trackId = trackId;
     info.duration = duration;
+    info.width = width;
+    info.height = height;
  
     NSValue *value = [NSValue valueWithBytes:&info objCType:@encode(ClipInfo)];
     [m_clipInfoMap setObject:value forKey:key];
@@ -448,7 +458,7 @@ typedef struct FClipInfo ClipInfo;
  */
 - (void) createSubOperation
 {
-    subOperationMenu = [self createSubOperationView:CGRectMake(viewRectW - 200, 200, 200, 240)];
+    subOperationMenu = [self createSubOperationView:CGRectMake(viewRectW - 200, 120, 200, 300)];
     [self.view addSubview:subOperationMenu];
     [subOperationMenu setHidden:true];
 }
@@ -456,19 +466,22 @@ typedef struct FClipInfo ClipInfo;
 - (UIView*) createSubOperationView:(CGRect) frame
 {
      //left group : buttons
-    selectClipIdText = [self createLabel:@"Clip:1"];
+    selectClipIdText = [UIViewFactory createLabel:@"Clip:1"];
     
-    UIButton* delBtn = [self createButtonWithTitle:@"删除"];
-    UIButton* copyBtn = [self createButtonWithTitle:@"复制"];
-    UIButton* splitBtn = [self createButtonWithTitle:@"分割"];
-    UIButton* speedBtn = [self createButtonWithTitle:@"速度"];
-    UIButton* cropBtn = [self createButtonWithTitle:@"裁剪"];
-    UIButton* traversalBtn = [self createButtonWithTitle:@"遍历打印"];
+    UIButton* delBtn = [UIViewFactory createButtonWithTitle:@"删除"];
+    UIButton* copyBtn = [UIViewFactory createButtonWithTitle:@"复制"];
+    UIButton* splitBtn = [UIViewFactory createButtonWithTitle:@"分割"];
+    UIButton* speedBtn = [UIViewFactory createButtonWithTitle:@"速度"];
+    UIButton* cropBtn = [UIViewFactory createButtonWithTitle:@"裁剪"];
+    UIButton* addTransitionBtn = [UIViewFactory createButtonWithTitle:@"转场"];
+    UIButton* traversalBtn = [UIViewFactory createButtonWithTitle:@"遍历打印"];
+
     [delBtn addTarget:self action:@selector(onDelete:) forControlEvents:UIControlEventTouchUpInside];
     [copyBtn addTarget:self action:@selector(onCopy:) forControlEvents:UIControlEventTouchUpInside];
     [splitBtn addTarget:self action:@selector(onSplit:) forControlEvents:UIControlEventTouchUpInside];
     [speedBtn addTarget:self action:@selector(onSetSpeed:) forControlEvents:UIControlEventTouchUpInside];
     [cropBtn addTarget:self action:@selector(onCrop:) forControlEvents:UIControlEventTouchUpInside];
+    [addTransitionBtn addTarget:self action:@selector(onAddTransition:) forControlEvents:UIControlEventTouchUpInside];
     [traversalBtn addTarget:self action:@selector(onTraversal:) forControlEvents:UIControlEventTouchUpInside];
     
      
@@ -483,6 +496,7 @@ typedef struct FClipInfo ClipInfo;
     [vGroupLeft addArrangedSubview:splitBtn];
     [vGroupLeft addArrangedSubview:speedBtn];
     [vGroupLeft addArrangedSubview:cropBtn];
+    [vGroupLeft addArrangedSubview:addTransitionBtn];
     [vGroupLeft addArrangedSubview:traversalBtn];
      
   
@@ -496,12 +510,13 @@ typedef struct FClipInfo ClipInfo;
     UIView* placeHolder2 = [[UIView alloc]init];
     UIView* placeHolder3 = [[UIView alloc]init];
     UIView* placeHolder4 = [[UIView alloc]init];
-    splitSlider = [self createSlider:0 : TEST_DURATION];
-    speedSlider = [self createSlider:0 :10];
-    cropSlider = [self createSlider:0 :TEST_DURATION];
-    splitValueText = [self createLabel:@"0"];
-    speedValueText = [self createLabel:@"0"];
-    cropValueText = [self createLabel:@"0"];
+    UIView* placeHolder5 = [[UIView alloc]init];
+    splitSlider = [UIViewFactory createSlider:0 : TEST_DURATION];
+    speedSlider = [UIViewFactory createSlider:0 :10];
+    cropSlider = [UIViewFactory createSlider:0 :TEST_DURATION];
+    splitValueText = [UIViewFactory createLabel:@"0"];
+    speedValueText = [UIViewFactory createLabel:@"0"];
+    cropValueText = [UIViewFactory createLabel:@"0"];
     [splitSlider addTarget:self action:@selector(onSplitProgressChange) forControlEvents:UIControlEventValueChanged];
     [speedSlider addTarget:self action:@selector(onSpeedProgressChange) forControlEvents:UIControlEventValueChanged];
     [cropSlider addTarget:self action:@selector(onCropProgressChange) forControlEvents:UIControlEventValueChanged];
@@ -533,6 +548,7 @@ typedef struct FClipInfo ClipInfo;
     [vGroupRight addArrangedSubview:speedGroup];
     [vGroupRight addArrangedSubview:cropGroup];
     [vGroupRight addArrangedSubview:placeHolder4];
+    [vGroupRight addArrangedSubview:placeHolder5];
 
      
     //parent container
@@ -590,7 +606,7 @@ typedef struct FClipInfo ClipInfo;
     
     int startTs = info.endTs + 1;
     int duration = info.duration;
-    [self addVideoClipInfoAndView:info.trackId:copyId:startTs:duration];
+    [self addVideoClipInfoAndView:info.trackId:copyId:startTs:duration:info.width:info.height];
     
     //关闭面板
     [subOperationMenu setHidden:true];
@@ -607,7 +623,7 @@ typedef struct FClipInfo ClipInfo;
     int newId = [VenusWrapper splitVideoClip:activeClipId :splitSlider.value];
     int startTs = info.startTs + splitSlider.value + 1;
     int duration = info.duration - splitSlider.value -1;
-    [self addVideoClipInfoAndView:info.trackId:newId:startTs:duration];
+    [self addVideoClipInfoAndView:info.trackId:newId:startTs:duration:info.width:info.height];
 
     
     //update origin clip info
@@ -642,12 +658,15 @@ typedef struct FClipInfo ClipInfo;
     [VenusWrapper traversalClips];
 }
 
-- (void) onSetSpeed:(id)sender
+-(void) onSetSpeed:(id)sender
 {
     NSLog(@"[Button]onSetSpeed : %d,%d",activeClipId,(int)speedSlider.value);
 }
 
-
+-(void) onAddTransition:(id)sender
+{
+    [VenusWrapper addTransition:activeClipId-1 :activeClipId :@"blend"];
+}
 
 - (void) onSplitProgressChange
 {
@@ -667,46 +686,62 @@ typedef struct FClipInfo ClipInfo;
 
 
 
-/**
- **********************************************************************************************************************
- *                               Common Function                                                                *
- **********************************************************************************************************************
- */
-
--(UIButton*) createButtonWithTitle:(NSString*)title
+-(void)createAlbumPicker
 {
-    UIButton* btn = [[UIButton alloc] init];
+    videoPicker = [[UIImagePickerController alloc] init];
+    videoPicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+    videoPicker.delegate = self;
+    videoPicker.mediaTypes = @[@"public.movie"]; //@"public.image"
     
-    btn.backgroundColor = UIColor.blackColor;
-    [btn setTitle:title forState:UIControlStateNormal];
-    [btn.titleLabel setAdjustsFontSizeToFitWidth:true];
-    return btn;
 }
 
--(UISlider*) createSlider:(int)min:(int)max
+
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
+    NSString* mediaType = info[UIImagePickerControllerMediaType];
+    if ([mediaType isEqualToString:(NSString*)kUTTypeMovie])
+    {
+        NSURL *URL = info[UIImagePickerControllerMediaURL];
+        NSLog(URL.absoluteString);
+
+        //添加一个video
+        int duration,width,height,test;
+        [self getVideoInfo:URL:&duration:&width:&height];
+        int startTs = (int)seekPtsSlider.value;//+= 20;
+        int clipId = [VenusWrapper addVideoClip:selectedTrackId:startTs:duration:width:height:URL.absoluteString];
+
+        
+        [self addVideoClipInfoAndView:selectedTrackId:clipId:startTs:duration:width:height];
+        activeClipId = clipId;
+    }
+    else
+    {
+        NSURL *URL = info[UIImagePickerControllerImageURL];
+        NSLog(URL.absoluteString);
+        //以该图片插入一段videoclip
+        int duration = 100;//[self getVideoDuration:URL];
+        int startTs = (int)seekPtsSlider.value;//+= 20;
+        int clipId = [VenusWrapper addVideoClip:selectedTrackId:startTs:duration:1280:720:URL.absoluteString];
+        [self addVideoClipInfoAndView:selectedTrackId:clipId:startTs:duration:1280:720];
+        activeClipId = clipId;
+    }
+    
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    
+}
+
+
+- (void)getVideoInfo:(NSURL*)url :(int*)duration :(int*)width :(int*)height
 {
-    UISlider* slider = [[UISlider alloc]init];
-    slider.minimumValue = min;
-    slider.maximumValue = max;
-    return slider;
-}
-
--(UILabel*) createLabel:(NSString*)text
-{
-    UILabel* label = [[UILabel alloc]init];
-    [label setText:text];
-    [label setTextColor:UIColor.blackColor];
-    [label setUserInteractionEnabled:false];
-    return label;
+    AVAsset *videoAsset = (AVAsset *)[AVAsset assetWithURL:url];
+    AVAssetTrack *videoAssetTrack = [[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
+    
+    int Unit = 10;  //1000 毫秒
+    *duration = (int)(CMTimeGetSeconds(videoAssetTrack.timeRange.duration)*Unit);
+    *width = videoAssetTrack.naturalSize.width;
+    *height = videoAssetTrack.naturalSize.height;
+    NSLog(@"getVideoDuration：%f,%d , w:%d, h:%d",CMTimeGetSeconds(videoAssetTrack.timeRange.duration),*duration,*width,*height);
 }
 
 
-- (UIStackView*) createStackView:(CGRect) frame:(UILayoutConstraintAxis)axis
-{
-    UIStackView* mView = [[UIStackView alloc] initWithFrame:frame];
-    mView.axis = axis;
-    mView.distribution = UIStackViewDistributionFillEqually;
-    mView.spacing = 5;
-    return mView;
-}
 @end

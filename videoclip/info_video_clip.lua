@@ -21,8 +21,8 @@ function VideoClip:new(trackId,clipId,params)
     self.duration = self.originEndTs - self.originStartTs
     self.logicStartTs = params.logicStartTs
     self.logicEndTs = params.logicStartTs + self.duration
-    self.width = 0
-    self.height = 0
+    self.width = params.width
+    self.height = params.height
     self.frameNum = 0
     self.speed = 1.0
     self.path = params.path

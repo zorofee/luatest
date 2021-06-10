@@ -207,7 +207,7 @@ end
 function VideoSceneModel:AddTransition(clip1,clip2,inPath)
     local transitionId = self:_NewClipId()
 
-    local testDuration = 10
+    local testDuration = 50
     local trackId = self.videoClipInfoMap[clip1].trackId
     local startTs = self.videoClipInfoMap[clip1].logicEndTs - testDuration / 2
     local endTs = self.videoClipInfoMap[clip2].logicStartTs + testDuration / 2
