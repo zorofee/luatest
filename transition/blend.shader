@@ -35,8 +35,10 @@ struct v2f
 };
 
 float _Progress;
-sampler2D _PrevTexture;
-sampler2D _NextTexture;
+Texture2D _PrevTexture;
+Texture2D _NextTexture;
+SamplerState _PrevTexture_Sampler;
+SamplerState _NextTexture_Sampler;
  
 v2f vert(appdata v)
 {
@@ -46,13 +48,16 @@ v2f vert(appdata v)
 	return o;
 }
 
-fixed4 frag(v2f i) : SV_Target
+void frag(in v2f i, out float4 mainColor : SV_Target0)
 {
-    fixed4 prev = tex2D(_PrevTexture, i.uv);
-    fixed4 next = tex2D(_NextTexture,  i.uv);
-    fixed4 result = lerp(prev, next, _Progress);
-    fixed4 finalColor = fixed4(result.rgb, 1.0);
-    return finalColor;
+    //fixed4 prev = tex2D(_PrevTexture, i.uv);
+    //fixed4 next = tex2D(_NextTexture,  i.uv);
+    //fixed4 result = lerp(prev, next, _Progress);
+	//mainColor = fixed4(result.rgb, 1.0);
+	float3 prev = _PrevTexture.Sample(_PrevTexture_Sampler, i.uv).xyz;
+	float3 next = _NextTexture.Sample(_NextTexture_Sampler, i.uv).xyz;
+	float3 result = lerp(prev, next, _Progress);
+	mainColor = float4(result.xyz, 1.0);
 } 
 
 ENDCG
