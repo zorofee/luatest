@@ -1,0 +1,117 @@
+{
+  "Always": {
+    "ALPHA_MODE": [ "ALPHA_OFF" ],
+    "ATTRIBUTES": [ {
+      "attID": "1",
+      "attName": "POSITION"
+    }, {
+      "attID": "16",
+      "attName": "TEXCOORD"
+    } ],
+    "COLOR_MASK": "COLOR_RGBA",
+    "DRAW_MODE": [ "CULL_FACE_OFF", "DEPTH_MASK_OFF", "DEPTH_TEST_OFF", "DEPTH_FUNCTION_LESS" ],
+    "LIGHT_MODE": [ "ALWAYS" ],
+    "POLYGON_MODE": [],
+    "Programs": [ {
+      "keyWords": [],
+      "psBufferSize": 2400,
+      "psShader": [ 0, 928, 12640 ],
+      "psUniforms": [ 1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10 ],
+      "shaderApi": "d3d11",
+      "vsAttributes": [ 0, 1 ],
+      "vsBufferSize": 2400,
+      "vsShader": [ 0, 0, 928 ],
+      "vsUniforms": [ 0 ]
+    } ],
+    "SCISSOR_MODE": [],
+    "STENCIL_MODE": [ "STENCIL_OFF" ],
+    "UNIFORMS": [ {
+      "varName": "DEVICE_COORDINATE_Y_FLIP",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2300",
+      "varSit": "",
+      "varType": "float"
+    }, {
+      "varName": "CAMERA_VIEW",
+      "varNum": "1",
+      "varRegCount": "4",
+      "varRegIndex": "128",
+      "varSit": "",
+      "varType": "float4x4"
+    }, {
+      "varName": "CAMERA_PROJECTION",
+      "varNum": "1",
+      "varRegCount": "4",
+      "varRegIndex": "256",
+      "varSit": "",
+      "varType": "float4x4"
+    }, {
+      "varName": "CAMERA_VIEWPROJ_INV",
+      "varNum": "1",
+      "varRegCount": "4",
+      "varRegIndex": "2304",
+      "varSit": "",
+      "varType": "float4x4"
+    }, {
+      "varName": "_MaxDistance",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2368",
+      "varSit": "",
+      "varType": "float"
+    }, {
+      "varName": "_Resolution",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2372",
+      "varSit": "",
+      "varType": "float"
+    }, {
+      "varName": "_Thickness",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2376",
+      "varSit": "",
+      "varType": "float"
+    }, {
+      "varName": "_RefinedSteps",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2380",
+      "varSit": "",
+      "varType": "float"
+    }, {
+      "varName": "texSize",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "2384",
+      "varSit": "",
+      "varType": "float2"
+    }, {
+      "varName": "TEXTURE_GBUFFER_C",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "0",
+      "varSit": "0",
+      "varType": "sampler2D"
+    }, {
+      "varName": "TEXTURE_GBUFFER_DEPTH",
+      "varNum": "1",
+      "varRegCount": "1",
+      "varRegIndex": "1",
+      "varSit": "0",
+      "varType": "sampler2D"
+    } ]
+  },
+  "Attributes": [],
+  "PassNames": [ "Always" ],
+  "Properties": {
+    "_MaxDistance": [ "reflection distance", "FLOAT", [ 8 ] ],
+    "_Resolution": [ "screen step percentage", "FLOAT", [ 0.3 ] ],
+    "_Thickness": [ "thickness", "FLOAT", [ 0.5 ] ]
+  },
+  "RenderQueue": "PostEffect",
+  "ShaderName": "ray_marching",
+  "Version": 2
+}
